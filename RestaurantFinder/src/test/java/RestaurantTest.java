@@ -1,59 +1,53 @@
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.mockito.Mockito;
 
 import java.time.LocalTime;
+import java.util.ArrayList;
 
 import static org.junit.jupiter.api.Assertions.*;
 
 class RestaurantTest {
     Restaurant restaurant;
-
-    List<Item>spoof=new ArrayList<Item>();
+    //REFACTOR ALL THE REPEATED LINES OF CODE
     @BeforeEach
-    public void restaurantCreation()
-    {
-        LocalTime openingTime=LocalTime.parse("10:30:00");
-        LocalTime closingTime=LocalTime.parse("22:00:00");
-        restaurant=new Restaurant("Amelie's cafe","Cheenai",openingTime,closingTime);
+    public void beforeEach() {
+        LocalTime openingTime = LocalTime.parse("10:30:00");
+        LocalTime closingTime = LocalTime.parse("22:00:00");
+        restaurant =new Restaurant("Amelie's cafe","Chennai",openingTime,closingTime);
         restaurant.addToMenu("Sweet corn soup",119);
-        restaurant.addToMenu("Vegetable lasagne",269);
+        restaurant.addToMenu("Vegetable lasagne", 269);
     }
+
 
     //>>>>>>>>>>>>>>>>>>>>>>>>>OPEN/CLOSED<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
     //-------FOR THE 2 TESTS BELOW, YOU MAY USE THE CONCEPT OF MOCKING, IF YOU RUN INTO ANY TROUBLE
     @Test
     public void is_restaurant_open_should_return_true_if_time_is_between_opening_and_closing_time(){
-     restaurant.setClosingTime(LoaclTime.now().plusMinutes(10));
-     assertTrue(restaurant.isRestaurantOpen());
+        //WRITE UNIT TEST CASE HERE
+        Restaurant mockRestaurant = Mockito.spy(restaurant);
+        Mockito.when(mockRestaurant.getCurrentTime()).thenReturn(LocalTime.of(11,30));
+
+        assertEquals(true, mockRestaurant.isRestaurantOpen());
     }
 
     @Test
     public void is_restaurant_open_should_return_false_if_time_is_outside_opening_and_closing_time(){
-        restaurant.setClosingTime(LocalTime.now().minusMinutes(10));
-        assertFalse(restaurant.isRestaurantOpen());
+        //WRITE UNIT TEST CASE HERE
+        Restaurant mockRestaurant = Mockito.spy(restaurant);
+        Mockito.when(mockRestaurant.getCurrentTime()).thenReturn(LocalTime.of(23,30));
+
+        assertEquals(false, mockRestaurant.isRestaurantOpen());
+
     }
 
     //<<<<<<<<<<<<<<<<<<<<<<<<<OPEN/CLOSED>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
-   //>>>>>>>>>>>>>>>>>>>>>>>>>>ORDER VALUE<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
-    @Test
-    public void order_value_should_get_cummulative_total_when_collection_of_items_selected(){
-        spoof=restaurant.getMenu();
-        assertEquals(506,restaurant.getOrderValue(spoof));
-    }
 
-    @Test
-    public void order_value_should_reduce_cumulative_total_when_an_item_removed(){
-        spoof=restaurant.getMenu();
-        int  total=restaurant.getOrderValue(spoof);
-        int afterTotal=spoof.get(1).getPrice();
-        spoof.remove(1);
-        assertEquals(total-afterTotal,restaurant.getOrderValue(spoof));
-    }
-    //<<<<<<<<<<<<<<<<<<<<<<<<<<ORDER VALUE >>>>>>>>>>>>>>>>>>>>>>>>>>
 
     //>>>>>>>>>>>>>>>>>>>>>>>>>>>MENU<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
     @Test
     public void adding_item_to_menu_should_increase_menu_size_by_1(){
+
 
         int initialMenuSize = restaurant.getMenu().size();
         restaurant.addToMenu("Sizzling brownie",319);
@@ -72,5 +66,67 @@ class RestaurantTest {
         assertThrows(itemNotFoundException.class,
                 ()->restaurant.removeFromMenu("French fries"));
     }
+
+    @Test
+    public void get_menu_should_display_restaurant_menu() {
+        assertEquals("[Sweet corn soup:119\n" +
+                ", Vegetable lasagne:269\n" +
+                "]", restaurant.getMenu().toString());
+    }
     //<<<<<<<<<<<<<<<<<<<<<<<MENU>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
+
+
+    //>>>>>>>>>>>>>>>>>>>>>>>>>>>ITEM SELECTION<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
+
+    @Test
+    public void select_menu_items_should_display_total_cost_of_selected_items() throws itemNotFoundException {
+
+        restaurant.addToMenu("French fries", 150);
+        restaurant.addToMenu("Chicken Burger", 210);
+        restaurant.addToMenu("Aalu tikki Burger", 90);
+
+        ArrayList<String> selectedItems = new ArrayList<String>();
+        selectedItems.add("Sweet corn soup");
+        selectedItems.add("Vegetable lasagne");
+        selectedItems.add("Aalu tikki Burger");
+
+        String totalCost = restaurant.selectMenuItems(selectedItems);
+        assertEquals("Your order will cost: ₹478", totalCost);
+
+        selectedItems.add("Chicken Burger");
+        totalCost = restaurant.selectMenuItems(selectedItems);
+        assertEquals("Your order will cost: ₹688", totalCost);
+
+        selectedItems.add("French fries");
+        totalCost = restaurant.selectMenuItems(selectedItems);
+        assertEquals("Your order will cost: ₹838", totalCost);
+
+        selectedItems.remove("Sweet corn soup");
+        totalCost = restaurant.selectMenuItems(selectedItems);
+        assertEquals("Your order will cost: ₹719", totalCost);
+
+        selectedItems.removeAll(selectedItems);
+        totalCost = restaurant.selectMenuItems(selectedItems);
+        assertEquals("Your order will cost: ₹0", totalCost);
+    }
+
+    @Test
+    public void select_menu_items_should_throw_item_not_found_exception_when_selection_item_is_unavailable() {
+        ArrayList<String> selectedItems = new ArrayList<String>();
+        selectedItems.add("Cheese Burger");
+
+        assertThrows(itemNotFoundException.class, () -> restaurant.selectMenuItems(selectedItems));
+    }
+
+    @Test
+    public void select_menu_items_should_throw_item_not_found_exception_when_some_of_the_selected_item_is_unavailable() throws itemNotFoundException {
+        ArrayList<String> selectedItems = new ArrayList<String>();
+        selectedItems.add("Sweet corn soup");
+        selectedItems.add("Vegetable lasagne");
+        selectedItems.add("Cheese Burger");
+
+        assertThrows(itemNotFoundException.class, () -> restaurant.selectMenuItems(selectedItems));
+    }
+
+    //<<<<<<<<<<<<<<<<<<<<<<<ITEM SELECTION>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
 }

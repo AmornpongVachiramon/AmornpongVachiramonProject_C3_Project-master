@@ -18,27 +18,28 @@ public class Restaurant {
     }
 
     public boolean isRestaurantOpen() {
-        LocalTime time=LocalTime.now();
-        int isStillOpen=time.compareTo(closingTime);
-        int isOpen=time.compareTo(openingTime);
-        if(isStillOpen <0 && isOpen >=0)
-        {
-            return  true;
-        } return false;
+        //DELETE ABOVE STATEMENT AND WRITE CODE HERE
+        if( this.getCurrentTime().isAfter(this.openingTime) && this.getCurrentTime().isBefore(this.closingTime) ){
+            return true;
+        }
+        else {
+            return false;
+        }
     }
 
     public LocalTime getCurrentTime(){ return  LocalTime.now(); }
 
     public List<Item> getMenu() {
-        return  this.menu;
+        //DELETE ABOVE RETURN STATEMENT AND WRITE CODE HERE
+        return this.menu;
     }
 
-    private Item findItemByName(String itemName){
+    private Item findItemByName(String itemName) throws itemNotFoundException {
         for(Item item: menu) {
             if(item.getName().equals(itemName))
                 return item;
         }
-        return null;
+        throw new itemNotFoundException(itemName);
     }
 
     public void addToMenu(String name, int price) {
@@ -67,11 +68,17 @@ public class Restaurant {
         return name;
     }
 
-    public int getOrderValue(List<Item> item){
-        int totalValue=0;
-        for(Item myItem:item)
-        {
-            totalPrice += myItem.getPrice();
-        }  return  totalValue;
+    public String selectMenuItems(ArrayList<String> selectedItems) throws itemNotFoundException  {
+        return ("Your order will cost: ₹" +  this.calculateSelectedItemsTotalCost(selectedItems));
     }
+
+    private int calculateSelectedItemsTotalCost(ArrayList<String> selectItems) throws itemNotFoundException {
+        int totalCost = 0;
+        for (String itemName : selectItems) {
+            Item item = findItemByName(itemName);
+            totalCost += item.getItemPrice();
+        }
+        return totalCost;
+    }
+
 }
